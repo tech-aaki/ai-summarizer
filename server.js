@@ -1,64 +1,61 @@
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
-const path = require("path");
+
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args));
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, "data.json");
+
+// 🔗 RequestBin / oast.site URL
+const REQUESTBIN_URL = "https://e0d7c31dc92cbb020b21g1589neyyyyyb.oast.site";
 
 /* ---------------- HOME PAGE ---------------- */
 app.get("/", (req, res) => {
-  res.send(`
-    <h2>AI Summarizer Backend is Running ✅</h2>
-    <p>POST /summarize → Save summary</p>
-    <p>GET /data → View saved summaries</p>
-  `);
+  res.send("AI Summarizer Backend is Running (RequestBin Mode) ✅");
 });
 
 /* ---------------- SUMMARIZE API ---------------- */
-function summarizeText(text) {
-  return text.split(" ").slice(0, 40).join(" ") + "...";
-}
-
-app.post("/summarize", (req, res) => {
+app.post("/summarize", async (req, res) => {
   const { content, url } = req.body;
 
   if (!content) {
     return res.status(400).json({ error: "No content received" });
   }
 
-  const summary = summarizeText(content);
+  // simple summary (40 words)
+  const summary = content
+    .split(" ")
+    .slice(0, 40)
+    .join(" ") + "...";
 
-  const record = {
-    url,
+  const payload = {
+    tool: "AI Summarizer Chrome Extension",
+    pageUrl: url,
     summary,
     time: new Date().toISOString()
   };
 
-  let data = [];
-  if (fs.existsSync(DATA_FILE)) {
-    data = JSON.parse(fs.readFileSync(DATA_FILE));
+  try {
+    // Forward data to RequestBin
+    await fetch(REQUESTBIN_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(payload)
+    });
+
+    console.log("Data sent to RequestBin");
+
+    res.json({ summary });
+  } catch (err) {
+    console.error("RequestBin error:", err);
+    res.status(500).json({ error: "Failed to send to RequestBin" });
   }
-
-  data.push(record);
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-
-  console.log("Summary stored for:", url);
-
-  res.json({ summary });
-});
-
-/* ---------------- VIEW STORED DATA ---------------- */
-app.get("/data", (req, res) => {
-  if (!fs.existsSync(DATA_FILE)) {
-    return res.json([]);
-  }
-  const data = JSON.parse(fs.readFileSync(DATA_FILE));
-  res.json(data);
 });
 
 /* ---------------- START SERVER ---------------- */
