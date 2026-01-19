@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const { MongoClient } = require("mongodb");
 
 const app = express();
 app.use(cors());
@@ -7,59 +8,81 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 3000;
 
-// 🔗 RequestBin / oast.site URL (MUST include https://)
-const REQUESTBIN_URL = "https://e0d7c31dc92cbb020b21g1589neyyyyyb.oast.site";
+// 🔐 MongoDB connection string
+const MONGO_URI =
+  "mongodb+srv://inforecyclestore_db_user:Rw3rC14S4r5nGbHM@ai-summarizer.gqwena9.mongodb.net/?appName=ai-summarizer";
+
+const DB_NAME = "ai_summarizer";
+const COLLECTION_NAME = "summaries";
+
+let collection;
+
+// 🔌 Connect to MongoDB ONCE
+async function connectMongo() {
+  try {
+    const client = new MongoClient(MONGO_URI);
+    await client.connect();
+    console.log("✅ MongoDB connected");
+
+    const db = client.db(DB_NAME);
+    collection = db.collection(COLLECTION_NAME);
+  } catch (err) {
+    console.error("❌ MongoDB connection failed:", err);
+  }
+}
+
+connectMongo();
 
 /* ---------------- HOME ---------------- */
 app.get("/", (req, res) => {
-  res.send("AI Summarizer Backend is Running (RequestBin Mode) ✅");
+  res.send("AI Summarizer Backend is Running (MongoDB Mode) ✅");
 });
 
-/* ---------------- SUMMARIZE ---------------- */
+/* ---------------- SAVE SUMMARY ---------------- */
 app.post("/summarize", async (req, res) => {
   const { content, url } = req.body;
-
-  console.log("📥 Incoming summarize request");
-  console.log("URL:", url);
-  console.log("Content length:", content ? content.length : 0);
 
   if (!content) {
     return res.status(400).json({ error: "No summary received" });
   }
 
-  // 🔥 IMPORTANT: DO NOT modify content (already summarized by Groq)
-  const payload = {
-    tool: "AI Summarizer Chrome Extension",
-    pageUrl: url,
-    summary: content, // FULL SUMMARY AS-IS
-    time: new Date().toISOString()
-  };
-
   try {
-    console.log("🚀 Sending data to RequestBin...");
+    const doc = {
+      pageUrl: url,
+      summary: content,          // FULL summary (no truncation)
+      createdAt: new Date()
+    };
 
-    const response = await fetch(REQUESTBIN_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(payload)
-    });
+    await collection.insertOne(doc);
 
-    console.log("✅ RequestBin response status:", response.status);
+    console.log("📦 Summary saved to MongoDB");
 
     res.json({
       success: true,
       summary: content
     });
-
   } catch (err) {
-    console.error("❌ RequestBin error:", err);
-    res.status(500).json({ error: "Failed to forward to RequestBin" });
+    console.error("❌ MongoDB insert error:", err);
+    res.status(500).json({ error: "Failed to save summary" });
   }
 });
 
-/* ---------------- START ---------------- */
+/* ---------------- GET ALL DATA ---------------- */
+app.get("/data", async (req, res) => {
+  try {
+    const data = await collection
+      .find({})
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    res.json(data);
+  } catch (err) {
+    console.error("❌ MongoDB fetch error:", err);
+    res.status(500).json({ error: "Failed to fetch data" });
+  }
+});
+
+/* ---------------- START SERVER ---------------- */
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log("🚀 Server running on port", PORT);
 });
