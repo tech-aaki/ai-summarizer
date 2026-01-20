@@ -10,7 +10,7 @@ app.use(express.json({ limit: '10mb' }));
 const PORT = process.env.PORT || 3000;
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://inforecyclestore_db_user:Rw3rC14S4r5nGbHM@ai-summarizer.gqwena9.mongodb.net/?appName=ai-summarizer";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://<db_username>:<db_password>@summarizer-cluster.bm0ieqb.mongodb.net/?appName=summarizer-cluster";
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
@@ -196,3 +196,4 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🔗 MongoDB: ${MONGODB_URI.split('@')[1]}`);
 });
+
