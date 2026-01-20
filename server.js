@@ -9,16 +9,25 @@ app.use(express.json({ limit: '10mb' }));
 
 const PORT = process.env.PORT || 3000;
 
-// MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://<db_username>:<db_password>@summarizer-cluster.bm0ieqb.mongodb.net/?appName=summarizer-cluster";
+// ✅ YOUR NEW MONGODB CONNECTION STRING
+const MONGODB_URI = "mongodb+srv://summarizer_user:Aaki4321@summarizer-cluster.bm0ieqb.mongodb.net/summarizer_db?retryWrites=true&w=majority&appName=summarizer-cluster";
 
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
-  dbName: "ai_summarizer_db"
 })
-.then(() => console.log("✅ MongoDB Connected Successfully"))
-.catch(err => console.error("❌ MongoDB Connection Error:", err));
+.then(() => {
+  console.log("✅ MongoDB Connected Successfully!");
+  console.log("📁 Database: summarizer_db");
+  console.log("🗂️ Collection: summaries");
+})
+.catch(err => {
+  console.error("❌ MongoDB Connection Error:", err);
+  process.exit(1);
+});
+
+
+
 
 // MongoDB Schema
 const summarySchema = new mongoose.Schema({
@@ -196,4 +205,5 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`🔗 MongoDB: ${MONGODB_URI.split('@')[1]}`);
 });
+
 
