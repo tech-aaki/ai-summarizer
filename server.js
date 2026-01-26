@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 async function testGroqAPI() {
-  const apiKey = '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';
+  const apiKey = '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';
   
   console.log('🔍 Testing Groq API...');
   console.log('API Key (first 10 chars):', apiKey.substring(0, 10) + '...');
@@ -47,3 +47,4 @@ async function testGroqAPI() {
 }
 
 testGroqAPI();
+
