@@ -21,7 +21,7 @@ const HISTORY_FILE = path.join(__dirname, 'history.json');
 
 // CORS configuration
 app.use(cors({
-  origin: '*', // Allow all origins for Chrome extension
+  origin: '*',
   methods: ['GET', 'POST', 'DELETE'],
   credentials: true
 }));
@@ -29,64 +29,88 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==================== MEDICAL KNOWLEDGE BASE ====================
+// ==================== ENHANCED MEDICAL KNOWLEDGE BASE ====================
 const MEDICAL_KNOWLEDGE = {
   fever: {
-    symptoms: [
-      "Elevated body temperature (above 100.4°F or 38°C)",
-      "Chills and shivering",
-      "Headache",
-      "Muscle aches",
-      "Loss of appetite",
-      "Dehydration",
-      "General weakness",
-      "Sweating"
-    ],
-    treatment: [
-      "Rest and get plenty of sleep",
-      "Drink fluids to stay hydrated",
-      "Take fever reducers like acetaminophen or ibuprofen",
-      "Use cool compresses",
-      "Wear lightweight clothing",
-      "Take lukewarm baths"
-    ],
-    emergency: [
+    description: "Fever is a temporary increase in body temperature, often a sign your body is fighting an illness.",
+    red_flags: [
       "Fever above 103°F (39.4°C)",
       "Fever lasting more than 3 days",
-      "Severe headache",
-      "Stiff neck",
-      "Confusion",
-      "Difficulty breathing"
+      "Severe headache with stiff neck",
+      "Confusion or disorientation",
+      "Difficulty breathing or chest pain",
+      "Seizures or convulsions",
+      "Skin rash that doesn't fade when pressed",
+      "Severe vomiting or inability to keep fluids down"
+    ],
+    medicine_suggestion: [
+      "Acetaminophen (Tylenol) - 500-1000mg every 4-6 hours (max 3000mg/day)",
+      "Ibuprofen (Advil, Motrin) - 200-400mg every 6-8 hours (max 1200mg/day)",
+      "Aspirin - 325-650mg every 4-6 hours (not for children under 16)",
+      "Naproxen (Aleve) - 220mg every 8-12 hours"
+    ],
+    lab_tests: [
+      "Complete Blood Count (CBC)",
+      "Blood culture if fever persists >48 hours",
+      "Urinalysis for urinary tract infection",
+      "Chest X-ray if respiratory symptoms present",
+      "Throat swab for strep test"
     ]
   },
   headache: {
-    types: ["Tension", "Migraine", "Cluster", "Sinus"],
-    remedies: ["Rest in dark room", "Hydration", "Cold compress", "Pain relievers"],
-    warning: ["Sudden severe headache", "Headache after injury", "Fever with headache"]
+    description: "Headache refers to pain in any region of the head, ranging from mild to severe.",
+    red_flags: [
+      "Sudden, severe headache (thunderclap headache)",
+      "Headache after head injury",
+      "Fever with headache and stiff neck",
+      "Confusion, seizures, or loss of consciousness",
+      "Weakness or numbness on one side of body",
+      "Visual disturbances or double vision",
+      "Worsening headache despite treatment",
+      "New headache in someone over 50 years old"
+    ],
+    medicine_suggestion: [
+      "Acetaminophen - 500-1000mg as needed",
+      "Ibuprofen - 200-400mg every 6-8 hours",
+      "Aspirin - 325-650mg as needed",
+      "Naproxen - 220-500mg every 8-12 hours",
+      "Sumatriptan (for migraines) - 50-100mg at onset",
+      "Preventive: Propranolol, Amitriptyline (for chronic headaches)"
+    ],
+    lab_tests: [
+      "Blood pressure measurement",
+      "CT scan of head (if red flags present)",
+      "MRI brain (for chronic or unusual headaches)",
+      "Blood tests: CBC, ESR, C-reactive protein",
+      "Lumbar puncture (if meningitis suspected)"
+    ]
   },
   cough: {
-    types: ["Dry", "Wet/Productive", "Chronic"],
-    remedies: ["Honey", "Steam inhalation", "Hydration", "Cough drops"],
-    duration: "See doctor if cough lasts >3 weeks"
-  }
-};
-
-// ==================== CAR KNOWLEDGE BASE ====================
-const CAR_KNOWLEDGE = {
-  bmw_m8: {
-    engine: "4.4-liter Twin-Turbo V8",
-    horsepower: "617-625 hp",
-    torque: "553 lb-ft",
-    acceleration: "0-60 mph in 3.0 seconds",
-    top_speed: "155-190 mph",
-    transmission: "8-speed automatic",
-    price: "$133,000 - $160,000",
-    features: [
-      "M xDrive all-wheel drive",
-      "Carbon fiber roof",
-      "M Sport exhaust system",
-      "20-inch alloy wheels",
-      "Merino leather interior"
+    description: "Cough is a reflex action to clear your airways of mucus and irritants.",
+    red_flags: [
+      "Coughing up blood (hemoptysis)",
+      "Shortness of breath or wheezing",
+      "Fever >101°F (38.3°C)",
+      "Weight loss without trying",
+      "Chest pain with coughing",
+      "Night sweats",
+      "Cough lasting more than 3 weeks",
+      "Hoarseness lasting more than 2 weeks"
+    ],
+    medicine_suggestion: [
+      "Dextromethorphan (Robitussin DM) - 10-30mg every 4-8 hours",
+      "Guaifenesin (Mucinex) - 200-400mg every 4 hours",
+      "Benzonatate (Tessalon Perles) - 100-200mg three times daily",
+      "Codeine cough syrup (prescription only)",
+      "Honey - 1-2 teaspoons as needed (for children over 1)",
+      "Inhalers: Albuterol (for asthma-related cough)"
+    ],
+    lab_tests: [
+      "Chest X-ray",
+      "Sputum culture if productive cough",
+      "Pulmonary function tests",
+      "Allergy testing if allergic cause suspected",
+      "CT scan of chest (if chronic cough)"
     ]
   }
 };
@@ -134,51 +158,87 @@ const clearSessionHistory = (sessionId) => {
 const getLocalResponse = (question) => {
   const lowerQ = question.toLowerCase().trim();
   
-  // Medical queries
+  // Fever queries
   if (lowerQ.includes('fever')) {
-    if (lowerQ.includes('symptom')) {
-      return `🤒 **Fever Symptoms:**\n${MEDICAL_KNOWLEDGE.fever.symptoms.map(s => `• ${s}`).join('\n')}\n\n⚠️ **Emergency signs:**\n${MEDICAL_KNOWLEDGE.fever.emergency.map(e => `• ${e}`).join('\n')}`;
-    }
-    return `🌡️ **Fever Treatment:**\n${MEDICAL_KNOWLEDGE.fever.treatment.map(t => `• ${t}`).join('\n')}\n\n*I'm an AI assistant, not a doctor. For medical advice, consult a healthcare professional.*`;
+    const knowledge = MEDICAL_KNOWLEDGE.fever;
+    return `
+${knowledge.description}
+
+🔴 **# Red Flags (Seek Immediate Medical Attention):**
+${knowledge.red_flags.map(item => `• ${item}`).join('\n')}
+
+💊 **# Medicine Suggestion:**
+${knowledge.medicine_suggestion.map(item => `• ${item}`).join('\n')}
+
+🔬 **# Lab Tests (if needed):**
+${knowledge.lab_tests.map(item => `• ${item}`).join('\n')}
+
+*I'm an AI assistant, not a doctor. For medical advice, consult a healthcare professional.*`;
   }
   
+  // Headache queries
   if (lowerQ.includes('headache')) {
-    return `🤕 **Headache Info:**\n**Types:** ${MEDICAL_KNOWLEDGE.headache.types.join(', ')}\n\n**Remedies:**\n${MEDICAL_KNOWLEDGE.headache.remedies.map(r => `• ${r}`).join('\n')}`;
+    const knowledge = MEDICAL_KNOWLEDGE.headache;
+    return `
+${knowledge.description}
+
+🔴 **# Red Flags (Seek Immediate Medical Attention):**
+${knowledge.red_flags.map(item => `• ${item}`).join('\n')}
+
+💊 **# Medicine Suggestion:**
+${knowledge.medicine_suggestion.map(item => `• ${item}`).join('\n')}
+
+🔬 **# Lab Tests (if needed):**
+${knowledge.lab_tests.map(item => `• ${item}`).join('\n')}
+
+*I'm an AI assistant, not a doctor. For medical advice, consult a healthcare professional.*`;
   }
   
+  // Cough queries
   if (lowerQ.includes('cough')) {
-    return `🤧 **Cough Info:**\n**Types:** ${MEDICAL_KNOWLEDGE.cough.types.join(', ')}\n\n**Remedies:**\n${MEDICAL_KNOWLEDGE.cough.remedies.map(r => `• ${r}`).join('\n')}\n\n${MEDICAL_KNOWLEDGE.cough.duration}`;
-  }
-  
-  // Car queries
-  if (lowerQ.includes('bmw') && lowerQ.includes('m8')) {
-    const car = CAR_KNOWLEDGE.bmw_m8;
-    return `🏎️ **BMW M8:**\n• Engine: ${car.engine}\n• Power: ${car.horsepower}\n• 0-60: ${car.acceleration}\n• Price: ${car.price}\n• Features: ${car.features.slice(0, 3).join(', ')}`;
+    const knowledge = MEDICAL_KNOWLEDGE.cough;
+    return `
+${knowledge.description}
+
+🔴 **# Red Flags (Seek Immediate Medical Attention):**
+${knowledge.red_flags.map(item => `• ${item}`).join('\n')}
+
+💊 **# Medicine Suggestion:**
+${knowledge.medicine_suggestion.map(item => `• ${item}`).join('\n')}
+
+🔬 **# Lab Tests (if needed):**
+${knowledge.lab_tests.map(item => `• ${item}`).join('\n')}
+
+*I'm an AI assistant, not a doctor. For medical advice, consult a healthcare professional.*`;
   }
   
   // Greetings
   if (/hello|hi|hey/i.test(lowerQ)) {
-    return "Hello! 👋 I'm your MediCar Assistant 🏥🚗\n\nI specialize in:\n• Medical information (fever, headache, cough)\n• Car specifications (BMW M8)\n• General questions\n\nHow can I help?";
+    return "🩺 **Hello! I'm Sanjeevani AI**\n\nI'm your dedicated medical assistant here to provide health information and guidance.\n\nI specialize in:\n• Symptom explanation and guidance\n• Red flag identification\n• Medicine suggestions (over-the-counter)\n• Recommended lab tests\n\nPlease describe your symptoms or health concerns.";
   }
   
   if (/how are you/i.test(lowerQ)) {
-    return "I'm doing great! Ready to provide medical info or answer questions. How about you?";
+    return "I'm here and ready to help with your health questions! How can I assist you today?";
   }
   
   if (/your name|who are you/i.test(lowerQ)) {
-    return "I'm **MediCar Assistant**! 🤖 I combine medical knowledge with car expertise.";
+    return "I'm **Sanjeevani AI**! 🩺 A medical assistance chatbot designed to provide health information, identify warning signs, and suggest when to seek medical care.";
   }
   
   if (/what can you do/i.test(lowerQ)) {
-    return "**I can help with:**\n🏥 Medical Info: Fever, headache, cough\n🚗 Car Details: BMW M8 specs\n💬 General Questions\n📝 Web page summarization\n\nTry: 'fever symptoms' or 'BMW M8 engine'";
+    return "**I can help with:**\n🩺 Symptom explanation and guidance\n⚠️ Red flag identification (when to seek emergency care)\n💊 Medicine suggestions (over-the-counter options)\n🔬 Recommended lab tests\n📋 General health information\n\n*Note: I provide information only, not medical diagnosis. Always consult a doctor for medical advice.*";
   }
   
-  return `I understand you're asking about "${question}".\n\nI specialize in medical information and car details. Could you be more specific?`;
+  // General medical queries
+  if (/pain|symptom|disease|illness|sick|medical|health|doctor|hospital|medicine|test/i.test(lowerQ)) {
+    return `I understand you're asking about "${question}".\n\nAs Sanjeevani AI, I can provide information about symptoms, red flags, medicine suggestions, and lab tests.\n\nCould you please describe:\n1. Your main symptom(s)\n2. How long you've had them\n3. Any other symptoms you're experiencing\n\nThis will help me provide more specific guidance.`;
+  }
+  
+  return `I understand you're asking about "${question}".\n\nI'm Sanjeevani AI, a medical assistance chatbot. I specialize in health-related information, symptom guidance, and identifying when to seek medical care.\n\nPlease ask me about any health concerns or symptoms you're experiencing.`;
 };
 
-// ==================== GROQ API CALLER (USES SINGLE API KEY) ====================
+// ==================== GROQ API CALLER ====================
 const callGroqAPI = async (question) => {
-  // Only one place in backend where we use GROQ_API_KEY
   if (!GROQ_API_KEY) {
     console.log('⚠️ Groq API key not available, using local response');
     return null;
@@ -194,37 +254,37 @@ const callGroqAPI = async (question) => {
         messages: [
           {
             role: 'system',
-            content: `You are MediCar Assistant, specialized in medical information and car details.
-            
-            MEDICAL EXPERTISE:
-            - Provide accurate medical information with disclaimers
-            - Never diagnose, only inform
-            - Include emergency warnings when relevant
-            - Use simple, clear language
-            
-            CAR EXPERTISE:
-            - Provide technical specifications accurately
-            - Compare features when asked
-            - Give practical advice
-            
-            GENERAL:
-            - Be friendly and helpful
-            - Use bullet points for lists
-            - Add relevant emojis
-            - Keep responses under 300 words`
+            content: `You are Sanjeevani AI, a medical assistance chatbot. Your responses MUST ALWAYS include these three sections at the end:
+
+# Red Flags (critical warning signs that need immediate medical attention)
+# Medicine Suggestion (over-the-counter medications with dosages)
+# Lab Tests (if needed for diagnosis)
+
+GUIDELINES:
+1. First provide clear explanation/guidance about the condition
+2. Then include the three required sections
+3. Use proper medical terminology but explain clearly
+4. Always include disclaimers about consulting doctors
+5. Never diagnose - only provide information
+6. For serious conditions, emphasize seeking immediate care
+7. Format with clear section headers and bullet points
+8. Use emojis for visual clarity
+9. Focus on symptoms mentioned by user
+
+IMPORTANT: EVERY RESPONSE MUST END WITH THE THREE SECTIONS.`
           },
           {
             role: 'user',
-            content: question
+            content: `As Sanjeevani AI, please provide information about: ${question}\n\nInclude explanation first, then the three required sections.`
           }
         ],
-        max_tokens: 500,
+        max_tokens: 800,
         temperature: 0.7,
         top_p: 0.9
       },
       {
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`, // Single API key usage
+          'Authorization': `Bearer ${GROQ_API_KEY}`,
           'Content-Type': 'application/json'
         },
         timeout: 15000
@@ -244,12 +304,11 @@ const callGroqAPI = async (question) => {
 const getAIResponse = async (question) => {
   const lowerQ = question.toLowerCase();
   
-  // Check if query is medical or car related
-  const isMedical = /fever|headache|cough|pain|symptom|medical|doctor|health/i.test(lowerQ);
-  const isCar = /bmw|car|vehicle|engine|horsepower|speed|transmission/i.test(lowerQ);
+  // Check if query is medical related
+  const isMedical = /fever|headache|cough|pain|symptom|medical|doctor|health|disease|illness|sick|medicine|test|blood|heart|lung|stomach|skin|eye|ear|nose|throat|bone|joint|muscle|nerve|mental|anxiety|depression|stress|allergy|infection|virus|bacteria|cancer|diabetes|pressure|cholesterol|asthma|arthritis|migraine|nausea|vomit|diarrhea|constipation|rash|itch|swell|inflam|injury|wound|burn|fracture|break|sprain|strain|fatigue|weakness|dizzy|vertigo|sleep|insomnia|appetite|weight|urine|bladder|kidney|liver|lung|breath|chest|back|neck|shoulder|arm|hand|leg|foot|toe|finger/i.test(lowerQ);
   
-  // For specific queries, try Groq API first
-  if (GROQ_API_KEY && (isMedical || isCar || lowerQ.length > 20)) {
+  // For medical queries, try Groq API first
+  if (GROQ_API_KEY && isMedical) {
     const apiResponse = await callGroqAPI(question);
     if (apiResponse) {
       return apiResponse;
@@ -263,10 +322,10 @@ const getAIResponse = async (question) => {
 // ==================== API ENDPOINTS ====================
 app.get('/', (req, res) => {
   res.json({
-    status: '✅ MediCar Assistant Backend',
-    version: '2.0.0',
+    status: '✅ Sanjeevani AI Backend',
+    version: '3.0.0',
     timestamp: new Date().toISOString(),
-    features: ['Medical Info', 'Car Details', 'Groq AI', 'Local Knowledge'],
+    features: ['Medical Information', 'Red Flag Identification', 'Medicine Suggestions', 'Lab Test Recommendations'],
     endpoints: ['POST /chat', 'GET /health', 'GET /history/:sessionId']
   });
 });
@@ -276,7 +335,8 @@ app.get('/health', (req, res) => {
     status: 'healthy',
     api_key_available: !!GROQ_API_KEY,
     history_count: historyCache.length,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    service: 'Sanjeevani AI Medical Assistant'
   });
 });
 
@@ -316,7 +376,7 @@ app.post('/chat', async (req, res) => {
     if (!question || question.trim() === '') {
       return res.json({
         success: false,
-        reply: 'Please type a question. I can help with medical or car information.'
+        reply: 'Please describe your symptoms or health concern. I\'m here to help as Sanjeevani AI.'
       });
     }
     
@@ -346,7 +406,7 @@ app.post('/chat', async (req, res) => {
       reply: getLocalResponse(req.body?.question || 'Hello'),
       sessionId: req.body?.sessionId || 'default',
       timestamp: new Date().toISOString(),
-      error: 'Using local knowledge base'
+      error: 'Using local medical knowledge base'
     });
   }
 });
@@ -374,11 +434,11 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`
 ╔════════════════════════════════════════════╗
-║     🤖 MEDICAR ASSISTANT BACKEND v2.0     ║
+║       🩺 SANJEEVANI AI BACKEND v3.0       ║
 ╠════════════════════════════════════════════╣
 ║ 🚀 PORT: ${PORT}                           ║
 ║ 🔑 API Key: ${GROQ_API_KEY ? '✓ Loaded' : '✗ Missing'}                    ║
-║ 🏥 Mode: Medical + Car Specialist         ║
+║ 🏥 Mode: Medical Assistance Only          ║
 ║ ✅ Status: RUNNING                        ║
 ╚════════════════════════════════════════════╝
 `);
