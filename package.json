@@ -1,5 +1,5 @@
 {
-  "name": "unified-ai-extension-backend",
+  "name": "Sanjeevani AI2",
   "version": "1.0.0",
   "description": "Unified backend for AI Summarizer + Voice Recorder + Medical Chatbot",
   "main": "server.js",
@@ -19,3 +19,4 @@
     "node": ">=18.0.0"
   }
 }
+
